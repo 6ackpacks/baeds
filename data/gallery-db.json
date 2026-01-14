@@ -1,0 +1,84 @@
+{
+  "works": [
+    {
+      "title": "皮卡丘",
+      "imagePath": "/uploads/user-works/work-1767807278074-scrn9ucai.png",
+      "gridSize": 52,
+      "colorCount": 30,
+      "totalBeads": 2704,
+      "colors": [],
+      "id": "work-1767807278084-ck69neyjf",
+      "createdAt": "2026-01-07T17:34:38.084Z"
+    },
+    {
+      "title": "猹妹",
+      "imagePath": "/uploads/user-works/work-1767807303890-38kxilhny.png",
+      "gridSize": 52,
+      "colorCount": 30,
+      "totalBeads": 2704,
+      "colors": [],
+      "id": "work-1767807303898-hqa4mqnlw",
+      "createdAt": "2026-01-07T17:35:03.898Z"
+    },
+    {
+      "title": "我的世界",
+      "imagePath": "/uploads/user-works/work-1767873809612-ivo26wme1.jpg",
+      "gridSize": 52,
+      "colorCount": 30,
+      "totalBeads": 2704,
+      "colors": [],
+      "id": "work-1767873809624-e7z5w3g50",
+      "createdAt": "2026-01-08T12:03:29.624Z"
+    },
+    {
+      "title": "哇哦",
+      "imagePath": "/uploads/user-works/work-1767873824086-c0z68k2xa.jpg",
+      "gridSize": 52,
+      "colorCount": 30,
+      "totalBeads": 2704,
+      "colors": [],
+      "id": "work-1767873824100-aj1skadlk",
+      "createdAt": "2026-01-08T12:03:44.100Z"
+    },
+    {
+      "title": "月亮月亮",
+      "imagePath": "/uploads/user-works/work-1767873978508-wvjdsyg38.jpg",
+      "gridSize": 52,
+      "colorCount": 30,
+      "totalBeads": 2704,
+      "colors": [],
+      "id": "work-1767873978522-n5nvlfinh",
+      "createdAt": "2026-01-08T12:06:18.523Z"
+    },
+    {
+      "title": "小猫",
+      "imagePath": "/uploads/user-works/work-1767874233133-jk0095x7t.jpg",
+      "gridSize": 52,
+      "colorCount": 30,
+      "totalBeads": 2704,
+      "colors": [],
+      "id": "work-1767874233146-wgujhk1wb",
+      "createdAt": "2026-01-08T12:10:33.146Z"
+    },
+    {
+      "title": "灰色大粉兔",
+      "imagePath": "/uploads/user-works/work-1767874276034-8m6gnsyei.jpg",
+      "gridSize": 52,
+      "colorCount": 30,
+      "totalBeads": 2704,
+      "colors": [],
+      "id": "work-1767874276041-efhjp3rfw",
+      "createdAt": "2026-01-08T12:11:16.041Z"
+    },
+    {
+      "title": "想吃了",
+      "imagePath": "/uploads/user-works/work-1767874299711-eayldqrj7.jpg",
+      "gridSize": 52,
+      "colorCount": 30,
+      "totalBeads": 2704,
+      "colors": [],
+      "id": "work-1767874299719-m0m1b3pgs",
+      "createdAt": "2026-01-08T12:11:39.719Z"
+    }
+  ]
+}

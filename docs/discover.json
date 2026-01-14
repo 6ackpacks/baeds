@@ -1,0 +1,58 @@
+[
+  {
+    "id": "discover-1",
+    "title": "可爱小兔",
+    "imagePath": "/discover/拿瓜动作@1x.png",
+    "gridSize": 48,
+    "colorCount": 20
+  },
+  {
+    "id": "discover-2",
+    "title": "彩虹天使",
+    "imagePath": "/discover/image@1x.png",
+    "gridSize": 48,
+    "colorCount": 25
+  },
+  {
+    "id": "discover-3",
+    "title": "魔法樱花",
+    "imagePath": "/discover/image (1).png",
+    "gridSize": 48,
+    "colorCount": 22
+  },
+  {
+    "id": "discover-4",
+    "title": "星空之梦",
+    "imagePath": "/discover/image_美图抠图10-29-2025@1x.png",
+    "gridSize": 48,
+    "colorCount": 24
+  },
+  {
+    "id": "discover-5",
+    "title": "甜蜜糖果",
+    "imagePath": "/discover/image_美图抠图10-29-2025 (2)@1x.png",
+    "gridSize": 48,
+    "colorCount": 18
+  },
+  {
+    "id": "discover-6",
+    "title": "梦幻精灵",
+    "imagePath": "/discover/image_美图抠图10-29-2025 (2)@1x (1).png",
+    "gridSize": 48,
+    "colorCount": 26
+  },
+  {
+    "id": "discover-7",
+    "title": "缤纷色彩",
+    "imagePath": "/discover/_美图抠图20251029@1x.png",
+    "gridSize": 48,
+    "colorCount": 20
+  },
+  {
+    "id": "discover-8",
+    "title": "创意组合",
+    "imagePath": "/discover/组 759@1x.png",
+    "gridSize": 48,
+    "colorCount": 28
+  }
+]
