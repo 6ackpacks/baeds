@@ -13,6 +13,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [gridSize, setGridSize] = useState(52)
   const [colorCount, setColorCount] = useState(30)
   const [colorComplexity, setColorComplexity] = useState(70)
+  const [colorMergeThreshold, setColorMergeThreshold] = useState(30)
   const [showGrid, setShowGrid] = useState(true)
   const [pixelArtResult, setPixelArtResult] = useState<PixelArtResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -36,11 +37,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       const savedGridSize = localStorage.getItem("gridSize")
       const savedColorCount = localStorage.getItem("colorCount")
       const savedColorComplexity = localStorage.getItem("colorComplexity")
+      const savedColorMergeThreshold = localStorage.getItem("colorMergeThreshold")
       const savedMode = localStorage.getItem("mode")
 
       if (savedGridSize) setGridSize(parseInt(savedGridSize))
       if (savedColorCount) setColorCount(parseInt(savedColorCount))
       if (savedColorComplexity) setColorComplexity(parseInt(savedColorComplexity))
+      if (savedColorMergeThreshold) setColorMergeThreshold(parseInt(savedColorMergeThreshold))
       if (savedMode) setMode(savedMode as "dominant" | "average")
 
       const storedImage = localStorage.getItem("uploadedImage")
@@ -62,7 +65,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       setError(null)
       try {
         console.log(`[生成像素图] 使用模式: ${mode}`)
-        const result = await convertImageToPixelArt(uploadedImage, gridSize, colorCount, colorComplexity, mode)
+        const result = await convertImageToPixelArt(uploadedImage, gridSize, colorCount, colorComplexity, mode, colorMergeThreshold)
         console.log(`[生成完成] 模式: ${mode}, 颜色数: ${result.colorPalette.size}`)
         setPixelArtResult(result)
       } catch (error) {

@@ -186,7 +186,8 @@ export async function convertImageToPixelArt(
   gridSize: number,
   colorCount: number,
   colorComplexity: number,
-  mode: "dominant" | "average" = "dominant"
+  mode: "dominant" | "average" = "dominant",
+  colorMergeThreshold: number = 30
 ): Promise<PixelArtResult> {
   // 加载图像
   const img = new Image()
@@ -267,9 +268,9 @@ export async function convertImageToPixelArt(
           }
 
           // 步骤2: 应用颜色合并算法（仅在 dominant 模式下）
-          console.log(`[Color Merging] Mode: ${mode}, Will merge: ${mode === "dominant"}`)
+          console.log(`[Color Merging] Mode: ${mode}, Will merge: ${mode === "dominant"}, Threshold: ${colorMergeThreshold}`)
           const mergedData = mode === "dominant"
-            ? mergeGlobalColors(initialMappedData, palette, 30, gridSize, gridSize)
+            ? mergeGlobalColors(initialMappedData, palette, colorMergeThreshold, gridSize, gridSize)
             : initialMappedData
           console.log(`[Color Merging] Complete. Initial colors: ${Object.keys(initialMappedData.flat().reduce((acc, cell) => { if (!cell.isExternal) acc[cell.key] = true; return acc; }, {} as Record<string, boolean>)).length}`)
 
