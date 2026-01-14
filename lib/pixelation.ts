@@ -8,78 +8,67 @@ export interface PaletteColor { key: string; hex: string; rgb: RgbColor; }
 export interface MappedPixel { key: string; color: string; isExternal?: boolean; }
 
 /**
- * 计算图像指定区域的代表色
- * @param imageData 图像像素数据
- * @param startX 区域起始 X
- * @param startY 区域起始 Y
- * @param width 区域宽度
- * @param height 区域高度
- * @param mode 计算模式：'dominant' (卡通) 或 'average' (真实)
+ * 计算图像指定区域的代表色（根据所选模式）
  */
 function calculateCellRepresentativeColor(
-  imageData: ImageData,
-  startX: number,
-  startY: number,
-  width: number,
-  height: number,
-  mode: PixelationMode
+    imageData: ImageData,
+    startX: number,
+    startY: number,
+    width: number,
+    height: number,
+    mode: PixelationMode
 ): RgbColor | null {
-  const data = imageData.data;
-  const imgWidth = imageData.width;
-  let pixelCount = 0;
+    const data = imageData.data;
+    const imgWidth = imageData.width;
+    let rSum = 0, gSum = 0, bSum = 0;
+    let pixelCount = 0;
+    const colorCountsInCell: { [key: string]: number } = {};
+    let dominantColorRgb: RgbColor | null = null;
+    let maxCount = 0;
 
-  // --- 真实模式所需变量 ---
-  let rSum = 0, gSum = 0, bSum = 0;
+    const endX = startX + width;
+    const endY = startY + height;
 
-  // --- 卡通模式所需变量 ---
-  const colorCountsInCell: { [key: string]: number } = {};
-  let dominantColorRgb: RgbColor | null = null;
-  let maxCount = 0;
+    for (let y = startY; y < endY; y++) {
+        for (let x = startX; x < endX; x++) {
+            const index = (y * imgWidth + x) * 4;
+            // 检查 alpha 通道，忽略完全透明的像素
+            if (data[index + 3] < 128) continue;
 
-  for (let y = startY; y < startY + height; y++) {
-    for (let x = startX; x < startX + width; x++) {
-      const index = (y * imgWidth + x) * 4;
+            const r = data[index];
+            const g = data[index + 1];
+            const b = data[index + 2];
 
-      // 忽略透明像素 (Alpha < 128)
-      if (data[index + 3] < 128) continue;
+            pixelCount++;
 
-      const r = data[index];
-      const g = data[index + 1];
-      const b = data[index + 2];
-      pixelCount++;
-
-      if (mode === PixelationMode.Average) {
-        // 【真实模式算法】：累加所有 RGB 分量
-        rSum += r;
-        gSum += g;
-        bSum += b;
-      } else {
-        // 【卡通模式算法】：统计颜色出现频率
-        const colorKey = `${r},${g},${b}`;
-        colorCountsInCell[colorKey] = (colorCountsInCell[colorKey] || 0) + 1;
-
-        // 实时追踪出现次数最多的颜色
-        if (colorCountsInCell[colorKey] > maxCount) {
-          maxCount = colorCountsInCell[colorKey];
-          dominantColorRgb = { r, g, b };
+            if (mode === PixelationMode.Average) {
+                rSum += r;
+                gSum += g;
+                bSum += b;
+            } else { // Dominant mode
+                const colorKey = `${r},${g},${b}`;
+                colorCountsInCell[colorKey] = (colorCountsInCell[colorKey] || 0) + 1;
+                if (colorCountsInCell[colorKey] > maxCount) {
+                    maxCount = colorCountsInCell[colorKey];
+                    dominantColorRgb = { r, g, b };
+                }
+            }
         }
-      }
     }
-  }
 
-  if (pixelCount === 0) return null;
+    if (pixelCount === 0) {
+        return null; // 区域内没有不透明像素
+    }
 
-  if (mode === PixelationMode.Average) {
-    // 返回算术平均值
-    return {
-      r: Math.round(rSum / pixelCount),
-      g: Math.round(gSum / pixelCount),
-      b: Math.round(bSum / pixelCount),
-    };
-  } else {
-    // 返回频率最高的主色
-    return dominantColorRgb;
-  }
+    if (mode === PixelationMode.Average) {
+        return {
+            r: Math.round(rSum / pixelCount),
+            g: Math.round(gSum / pixelCount),
+            b: Math.round(bSum / pixelCount),
+        };
+    } else { // Dominant mode
+        return dominantColorRgb;
+    }
 }
 
 /**

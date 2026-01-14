@@ -1,5 +1,9 @@
-import colors from "@/docs/color.json"
+import colorsData from "@/docs/color.json"
 import { pixelateImage, findClosestPaletteColor, PixelationMode, type RgbColor, type PaletteColor } from "./pixelation"
+import { mergeGlobalColors, type MappedPixel } from "./color-merging"
+
+// Ensure colors is an array
+const colors = Array.isArray(colorsData) ? colorsData : (colorsData as any).default || []
 
 export interface ColorData {
   id: string
@@ -209,17 +213,19 @@ export async function convertImageToPixelArt(
           throw new Error("无法获取Canvas上下文")
         }
 
-        // 设置Canvas大小为目标网格大小
-        canvas.width = gridSize
-        canvas.height = gridSize
+        // 保持原始图像尺寸，不要缩放到gridSize
+        const originalWidth = img.width
+        const originalHeight = img.height
+        canvas.width = originalWidth
+        canvas.height = originalHeight
 
-        // 绘制缩放后的图像（保留透明度信息）
-        ctx.drawImage(img, 0, 0, gridSize, gridSize)
+        // 绘制原始尺寸的图像
+        ctx.drawImage(img, 0, 0, originalWidth, originalHeight)
 
-        // 获取像素数据（包含alpha通道）
+        // 获取原始尺寸的像素数据
         let imageData: ImageData
         try {
-          imageData = ctx.getImageData(0, 0, gridSize, gridSize)
+          imageData = ctx.getImageData(0, 0, originalWidth, originalHeight)
         } catch (error) {
           throw new Error(`无法读取Canvas像素数据：${error instanceof Error ? error.message : "未知错误"}`)
         }
@@ -227,6 +233,7 @@ export async function convertImageToPixelArt(
         // 使用新的像素化算法（如果选择了 dominant 或 average 模式）
         if (mode === "dominant" || mode === "average") {
           const pixelationMode = mode === "dominant" ? PixelationMode.Dominant : PixelationMode.Average
+          // 使用原始图像尺寸进行像素化
           const pixelatedColors = pixelateImage(imageData, gridSize, gridSize, pixelationMode)
 
           // 转换色板格式
@@ -236,31 +243,58 @@ export async function convertImageToPixelArt(
             rgb: { r: c.rgb[0], g: c.rgb[1], b: c.rgb[2] }
           }))
 
-          // 创建像素网格
-          const pixels: (string | null)[][] = []
-          const colorPalette = new Map<string, ColorData>()
-          const colorUsage: Record<string, number> = {}
+          // 步骤1: 创建初始映射的像素网格
+          const initialMappedData: MappedPixel[][] = []
           let transparentPixelCount = 0
 
           for (let y = 0; y < gridSize; y++) {
-            pixels[y] = []
+            initialMappedData[y] = []
             for (let x = 0; x < gridSize; x++) {
               const cellColor = pixelatedColors[y][x]
 
               if (cellColor === null) {
-                pixels[y][x] = null
+                initialMappedData[y][x] = { key: 'T1', color: '#FFFFFF', isExternal: true }
                 transparentPixelCount++
               } else {
                 const closestColor = findClosestPaletteColor(cellColor, palette)
-                const colorData = (colors as ColorData[]).find(c => c.id === closestColor.key)!
-
-                pixels[y][x] = closestColor.key
-
-                if (!colorPalette.has(closestColor.key)) {
-                  colorPalette.set(closestColor.key, colorData)
-                  colorUsage[closestColor.key] = 0
+                initialMappedData[y][x] = {
+                  key: closestColor.key,
+                  color: closestColor.hex,
+                  isExternal: false
                 }
-                colorUsage[closestColor.key]++
+              }
+            }
+          }
+
+          // 步骤2: 应用颜色合并算法（仅在 dominant 模式下）
+          console.log(`[Color Merging] Mode: ${mode}, Will merge: ${mode === "dominant"}`)
+          const mergedData = mode === "dominant"
+            ? mergeGlobalColors(initialMappedData, palette, 30, gridSize, gridSize)
+            : initialMappedData
+          console.log(`[Color Merging] Complete. Initial colors: ${Object.keys(initialMappedData.flat().reduce((acc, cell) => { if (!cell.isExternal) acc[cell.key] = true; return acc; }, {} as Record<string, boolean>)).length}`)
+
+
+          // 步骤3: 从合并后的数据创建最终结果
+          const pixels: (string | null)[][] = []
+          const colorPalette = new Map<string, ColorData>()
+          const colorUsage: Record<string, number> = {}
+
+          for (let y = 0; y < gridSize; y++) {
+            pixels[y] = []
+            for (let x = 0; x < gridSize; x++) {
+              const cell = mergedData[y][x]
+
+              if (cell.isExternal) {
+                pixels[y][x] = null
+              } else {
+                pixels[y][x] = cell.key
+                const colorData = (colors as ColorData[]).find(c => c.id === cell.key)!
+
+                if (!colorPalette.has(cell.key)) {
+                  colorPalette.set(cell.key, colorData)
+                  colorUsage[cell.key] = 0
+                }
+                colorUsage[cell.key]++
               }
             }
           }

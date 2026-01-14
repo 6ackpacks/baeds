@@ -19,6 +19,7 @@ export default function UploadPage() {
   const [colorCount, setColorCount] = useState(30)
   const [colorComplexity, setColorComplexity] = useState(70)
   const [mode, setMode] = useState<"dominant" | "average">("dominant")
+  const [brand, setBrand] = useState<string>("MARD")
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -65,6 +66,7 @@ export default function UploadPage() {
       localStorage.setItem("colorCount", colorCount.toString())
       localStorage.setItem("colorComplexity", colorComplexity.toString())
       localStorage.setItem("mode", mode)
+      localStorage.setItem("brand", brand)
     }
     // Navigate to editor with uploaded image
     router.push("/editor/custom")
@@ -272,6 +274,23 @@ export default function UploadPage() {
                 {mode === "dominant" && "简单模式：提取单元格内最常见的颜色，保留清晰边界，适合卡通图片"}
                 {mode === "average" && "真实模式：计算单元格内颜色平均值，色彩过渡更自然，适合照片"}
               </p>
+            </div>
+
+            {/* Brand Selection */}
+            <div>
+              <Label className="text-sm font-bold mb-3 block text-brand-text">拼豆品牌</Label>
+              <select
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+                className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 bg-white text-brand-text font-medium"
+              >
+                <option value="MARD">MARD</option>
+                <option value="COCO">COCO</option>
+                <option value="漫漫">漫漫</option>
+                <option value="盼盼">盼盼</option>
+                <option value="咪小窝">咪小窝</option>
+              </select>
+              <p className="text-xs text-gray-500 mt-2">选择您使用的拼豆品牌色号系统</p>
             </div>
 
             {/* Info Box */}

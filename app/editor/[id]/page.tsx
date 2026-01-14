@@ -61,7 +61,9 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
       setIsLoading(true)
       setError(null)
       try {
+        console.log(`[生成像素图] 使用模式: ${mode}`)
         const result = await convertImageToPixelArt(uploadedImage, gridSize, colorCount, colorComplexity, mode)
+        console.log(`[生成完成] 模式: ${mode}, 颜色数: ${result.colorPalette.size}`)
         setPixelArtResult(result)
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : "未知错误"
@@ -126,6 +128,21 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
   }
 
+  const handleModeChange = async (newMode: "dominant" | "average") => {
+    console.log(`[模式切换] 从 ${mode} 切换到 ${newMode}`)
+    if (!uploadedImage) {
+      console.log(`[模式切换] 没有上传图片，取消切换`)
+      return
+    }
+
+    if (newMode === mode) {
+      console.log(`[模式切换] 模式相同，无需切换`)
+      return
+    }
+
+    setMode(newMode)
+  }
+
   return (
     <div className="h-screen flex flex-col bg-background">
       <header className="h-16 bg-white border-b border-border flex items-center justify-between px-6">
@@ -178,7 +195,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
         ) : pixelArtResult ? (
-          <EnhancedPixelArtCanvas pixelData={pixelArtResult} showGrid={showGrid} />
+          <EnhancedPixelArtCanvas pixelData={pixelArtResult} showGrid={showGrid} onModeChange={handleModeChange} />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
             <p>暂无图像数据，请上传图像</p>

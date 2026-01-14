@@ -9,6 +9,7 @@ type DisplayMode = "simple" | "realistic"
 interface EnhancedPixelArtCanvasProps {
   pixelData: PixelArtResult
   showGrid?: boolean
+  onModeChange?: (mode: "dominant" | "average") => void
 }
 
 function isColorLight(hex: string): boolean {
@@ -21,6 +22,7 @@ function isColorLight(hex: string): boolean {
 export default function EnhancedPixelArtCanvas({
   pixelData,
   showGrid = true,
+  onModeChange,
 }: EnhancedPixelArtCanvasProps) {
   const { gridSize, pixels, colorPalette } = pixelData
   const containerRef = useRef<HTMLDivElement>(null)
@@ -41,7 +43,7 @@ export default function EnhancedPixelArtCanvas({
   }, [gridSize])
 
   const [zoom, setZoom] = useState(1)
-  const [displayMode, setDisplayMode] = useState<DisplayMode>("realistic")
+  const [displayMode, setDisplayMode] = useState<DisplayMode>("simple")
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
@@ -149,7 +151,12 @@ export default function EnhancedPixelArtCanvas({
             {(["simple", "realistic"] as const).map((mode) => (
               <button
                 key={mode}
-                onClick={() => setDisplayMode(mode)}
+                onClick={() => {
+                  setDisplayMode(mode)
+                  if (onModeChange) {
+                    onModeChange(mode === "simple" ? "dominant" : "average")
+                  }
+                }}
                 className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
                   displayMode === mode
                     ? "bg-black text-white"
