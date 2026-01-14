@@ -5,7 +5,7 @@ import { ArrowLeft, Download, Scissors } from "lucide-react"
 import Link from "next/link"
 import { convertImageToPixelArt, type PixelArtResult } from "@/lib/pixel-converter"
 import { exportProfessionalChart, downloadChart } from "@/lib/imageDownloader"
-import EnhancedPixelArtCanvas from "@/components/EnhancedPixelArtCanvas"
+import EditableCanvas from "@/components/EditableCanvas"
 import { removeBackground } from "@imgly/background-removal"
 
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
@@ -143,6 +143,16 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     setMode(newMode)
   }
 
+  const handleGridChange = (newGrid: (string | null)[][]) => {
+    if (!pixelArtResult) return
+
+    // Update the pixel art result with the new grid
+    setPixelArtResult({
+      ...pixelArtResult,
+      pixels: newGrid
+    })
+  }
+
   return (
     <div className="h-screen flex flex-col bg-background">
       <header className="h-16 bg-white border-b border-border flex items-center justify-between px-6">
@@ -195,7 +205,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
             </div>
           </div>
         ) : pixelArtResult ? (
-          <EnhancedPixelArtCanvas pixelData={pixelArtResult} showGrid={showGrid} onModeChange={handleModeChange} />
+          <EditableCanvas pixelData={pixelArtResult} showGrid={showGrid} onGridChange={handleGridChange} />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
             <p>暂无图像数据，请上传图像</p>

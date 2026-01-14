@@ -18,6 +18,7 @@ export default function UploadPage() {
   const [gridSize, setGridSize] = useState(52)
   const [colorCount, setColorCount] = useState(30)
   const [colorComplexity, setColorComplexity] = useState(70)
+  const [colorMergeThreshold, setColorMergeThreshold] = useState(30)
   const [mode, setMode] = useState<"dominant" | "average">("dominant")
   const [brand, setBrand] = useState<string>("MARD")
 
@@ -65,6 +66,7 @@ export default function UploadPage() {
       localStorage.setItem("gridSize", gridSize.toString())
       localStorage.setItem("colorCount", colorCount.toString())
       localStorage.setItem("colorComplexity", colorComplexity.toString())
+      localStorage.setItem("colorMergeThreshold", colorMergeThreshold.toString())
       localStorage.setItem("mode", mode)
       localStorage.setItem("brand", brand)
     }
@@ -181,14 +183,14 @@ export default function UploadPage() {
           <div className="space-y-8">
             {/* Grid Size */}
             <div>
-              <Label className="text-sm font-bold mb-3 block text-brand-text">网格尺寸</Label>
+              <Label className="text-sm font-bold mb-3 block text-brand-text">网格尺寸 (粒度)</Label>
               <div className="space-y-3">
                 <Slider
                   value={[gridSize]}
                   onValueChange={(value) => setGridSize(value[0])}
-                  min={16}
-                  max={128}
-                  step={4}
+                  min={10}
+                  max={300}
+                  step={2}
                   className="w-full"
                 />
                 <input
@@ -198,7 +200,7 @@ export default function UploadPage() {
                   className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-center font-mono font-bold text-lg text-brand-text"
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-2">更大的尺寸会保留更多细节，但需要更多拼豆。</p>
+              <p className="text-xs text-gray-500 mt-2">控制横向格子数量（10-300），更大的尺寸会保留更多细节。</p>
             </div>
 
             {/* Color Count */}
@@ -275,6 +277,30 @@ export default function UploadPage() {
                 {mode === "average" && "真实模式：计算单元格内颜色平均值，色彩过渡更自然，适合照片"}
               </p>
             </div>
+
+            {/* Color Merge Threshold - Only for dominant mode */}
+            {mode === "dominant" && (
+              <div>
+                <Label className="text-sm font-bold mb-3 block text-brand-text">颜色合并阈值</Label>
+                <div className="space-y-3">
+                  <Slider
+                    value={[colorMergeThreshold]}
+                    onValueChange={(value) => setColorMergeThreshold(value[0])}
+                    min={0}
+                    max={100}
+                    step={5}
+                    className="w-full"
+                  />
+                  <input
+                    type="text"
+                    value={colorMergeThreshold}
+                    readOnly
+                    className="w-full border-2 border-gray-200 rounded-lg px-4 py-3 bg-gray-50 text-center font-mono font-bold text-lg text-brand-text"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-2">调整相似颜色的合并阈值（0-100），数值越大合并越多，色块越平滑。</p>
+              </div>
+            )}
 
             {/* Brand Selection */}
             <div>
