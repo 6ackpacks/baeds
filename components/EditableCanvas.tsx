@@ -26,6 +26,8 @@ export default function EditableCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
+  const basePixelSize = 20
+
   // Editor state
   const [isEditMode, setIsEditMode] = useState(false)
   const [currentTool, setCurrentTool] = useState<ToolType>('pen')
