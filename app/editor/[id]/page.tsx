@@ -191,7 +191,121 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         </div>
       </header>
 
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 flex overflow-hidden">
+        {/* Settings Panel */}
+        <aside className="w-80 bg-white border-r border-border overflow-y-auto p-6">
+          <h2 className="text-lg font-semibold mb-4">参数设置</h2>
+
+          <div className="space-y-6">
+            {/* Grid Size */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">网格尺寸 (粒度)</label>
+              <input
+                type="range"
+                min="10"
+                max="300"
+                step="2"
+                value={gridSize}
+                onChange={(e) => setGridSize(parseInt(e.target.value))}
+                className="w-full"
+              />
+              <div className="text-center mt-2 text-sm font-mono bg-gray-100 py-2 rounded">
+                {gridSize} x {gridSize}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">控制横向格子数量（10-300）</p>
+            </div>
+
+            {/* Mode Selection */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">像素化模式</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setMode("dominant")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    mode === "dominant"
+                      ? "bg-black text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  简单
+                </button>
+                <button
+                  onClick={() => setMode("average")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    mode === "average"
+                      ? "bg-black text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  真实
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                {mode === "dominant" && "简单模式：保留清晰边界"}
+                {mode === "average" && "真实模式：色彩过渡自然"}
+              </p>
+            </div>
+
+            {/* Color Merge Threshold - Only for dominant mode */}
+            {mode === "dominant" && (
+              <div>
+                <label className="text-sm font-medium mb-2 block">颜色合并阈值</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={colorMergeThreshold}
+                  onChange={(e) => setColorMergeThreshold(parseInt(e.target.value))}
+                  className="w-full"
+                />
+                <div className="text-center mt-2 text-sm font-mono bg-gray-100 py-2 rounded">
+                  {colorMergeThreshold}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">数值越大合并越多，色块越平滑</p>
+              </div>
+            )}
+
+            {/* Color Count */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">颜色数量</label>
+              <input
+                type="range"
+                min="3"
+                max="100"
+                step="1"
+                value={colorCount}
+                onChange={(e) => setColorCount(parseInt(e.target.value))}
+                className="w-full"
+              />
+              <div className="text-center mt-2 text-sm font-mono bg-gray-100 py-2 rounded">
+                {colorCount}
+              </div>
+              <p className="text-xs text-gray-500 mt-1">支持3-100种颜色</p>
+            </div>
+
+            {/* Color Complexity */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">颜色还原度</label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="10"
+                value={colorComplexity}
+                onChange={(e) => setColorComplexity(parseInt(e.target.value))}
+                className="w-full"
+              />
+              <div className="text-center mt-2 text-sm font-mono bg-gray-100 py-2 rounded">
+                {colorComplexity}%
+              </div>
+              <p className="text-xs text-gray-500 mt-1">控制颜色过渡的平滑程度</p>
+            </div>
+          </div>
+        </aside>
+
+        {/* Canvas Area */}
+        <div className="flex-1 overflow-hidden">
         {isLoading ? (
           <div className="w-full h-full flex items-center justify-center">
             <div className="text-center">
