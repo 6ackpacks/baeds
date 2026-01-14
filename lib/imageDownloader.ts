@@ -7,6 +7,9 @@ export interface ExportOptions {
   coordinateInterval?: number // 10 or 15
   cellSize?: number
   title?: string
+  showGrid?: boolean
+  gridLineColor?: string
+  ignoreBackground?: boolean
 }
 
 /**
