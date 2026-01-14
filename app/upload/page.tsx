@@ -170,7 +170,7 @@ export default function UploadPage() {
                   whileTap={{ scale: 0.95 }}
                 >
                   生成拼豆图案
-                </button>
+                </motion.button>
               </div>
             )}
           </div>
