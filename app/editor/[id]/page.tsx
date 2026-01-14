@@ -1,12 +1,11 @@
 "use client"
 
 import { useState, useEffect, use } from "react"
-import { ArrowLeft, Download, Scissors } from "lucide-react"
+import { ArrowLeft, Download } from "lucide-react"
 import Link from "next/link"
 import { convertImageToPixelArt, type PixelArtResult } from "@/lib/pixel-converter"
 import { exportProfessionalChart, downloadChart } from "@/lib/imageDownloader"
 import EditableCanvas from "@/components/EditableCanvas"
-import { removeBackground } from "@imgly/background-removal"
 
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -20,7 +19,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<"dominant" | "average">("dominant")
-  const [isRemovingBackground, setIsRemovingBackground] = useState(false)
 
   // 初始化颜色和示例图像
   useEffect(() => {
@@ -99,38 +97,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
     }
   }
 
-  const handleRemoveBackground = async () => {
-    if (!uploadedImage || isRemovingBackground) return
-
-    setIsRemovingBackground(true)
-    setError(null)
-
-    try {
-      // Convert data URL to Blob
-      const response = await fetch(uploadedImage)
-      const blob = await response.blob()
-
-      // Remove background
-      const resultBlob = await removeBackground(blob)
-
-      // Convert result back to data URL
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setUploadedImage(reader.result as string)
-        setIsRemovingBackground(false)
-      }
-      reader.onerror = () => {
-        setError("图片转换失败")
-        setIsRemovingBackground(false)
-      }
-      reader.readAsDataURL(resultBlob)
-    } catch (error) {
-      console.error("背景移除失败:", error)
-      setError(`背景移除失败: ${error instanceof Error ? error.message : "未知错误"}`)
-      setIsRemovingBackground(false)
-    }
-  }
-
   const handleModeChange = async (newMode: "dominant" | "average") => {
     console.log(`[模式切换] 从 ${mode} 切换到 ${newMode}`)
     if (!uploadedImage) {
@@ -173,14 +139,6 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           </div>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={handleRemoveBackground}
-            disabled={!uploadedImage || isRemovingBackground}
-            className="px-6 py-2 rounded-full bg-white border-2 border-black text-black hover:bg-black hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <Scissors className="w-4 h-4 inline mr-2" />
-            {isRemovingBackground ? "处理中..." : "移除背景"}
-          </button>
           <button
             onClick={handleDownload}
             className="px-6 py-2 rounded-full bg-black text-white hover:bg-brand-accent"

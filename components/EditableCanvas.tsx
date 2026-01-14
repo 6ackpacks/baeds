@@ -396,18 +396,48 @@ export default function EditableCanvas({
       {/* Color Palette Sidebar */}
       <div className="w-80 bg-white border-l border-border overflow-y-auto">
         <div className="p-6">
-          <h2 className="text-lg font-semibold mb-4">调色板</h2>
-          <div className="grid grid-cols-4 gap-2">
+          <h2 className="text-lg font-semibold mb-4">颜色统计</h2>
+
+          {/* Overall Statistics */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">颜色种类</p>
+                <p className="text-2xl font-bold">{colorPalette.size}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">总珠子数</p>
+                <p className="text-2xl font-bold">{pixelData.totalBeads}</p>
+              </div>
+            </div>
+          </div>
+
+          <h3 className="text-sm font-semibold mb-3">颜色清单</h3>
+          <div className="space-y-3">
             {Array.from(colorPalette.values()).map((color) => (
-              <button
+              <div
                 key={color.id}
-                onClick={() => setSelectedColorId(color.id)}
-                className={`w-full aspect-square rounded-lg border-2 transition-all ${
-                  selectedColorId === color.id ? 'border-black scale-110' : 'border-gray-200 hover:border-gray-400'
-                }`}
-                style={{ backgroundColor: color.hex }}
-                title={`${color.id} - ${color.name}`}
-              />
+                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-border"
+              >
+                <div
+                  className="w-12 h-12 rounded-lg border-2 border-border flex-shrink-0"
+                  style={{ backgroundColor: color.hex }}
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-sm">{color.id}</span>
+                    <span className="text-xs bg-white px-2 py-1 rounded border border-border">
+                      {color.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">{color.hex}</span>
+                    <span className="font-medium text-sm">
+                      {pixelData.colorUsage[color.id] || 0} 颗
+                    </span>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </div>
