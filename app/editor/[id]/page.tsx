@@ -6,6 +6,7 @@ import Link from "next/link"
 import { convertImageToPixelArt, type PixelArtResult } from "@/lib/pixel-converter"
 import { exportProfessionalChart, downloadChart } from "@/lib/imageDownloader"
 import EditableCanvas from "@/components/EditableCanvas"
+import ExportOptionsDialog, { type ExportOptions } from "@/components/ExportOptionsDialog"
 
 export default function EditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -19,6 +20,7 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [mode, setMode] = useState<"dominant" | "average">("dominant")
+  const [showExportDialog, setShowExportDialog] = useState(false)
 
   // 初始化颜色和示例图像
   useEffect(() => {
@@ -80,16 +82,23 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
   }, [uploadedImage, gridSize, colorCount, colorComplexity, mode])
 
   const handleDownload = () => {
+    setShowExportDialog(true)
+  }
+
+  const handleExport = (options: ExportOptions) => {
     if (!pixelArtResult) return
     try {
-      // 使用新的专业导出引擎
+      // 使用导出选项生成图纸
       const canvas = exportProfessionalChart(pixelArtResult, {
-        showHeader: true,
-        showCoordinates: true,
-        showStatistics: true,
-        coordinateInterval: 10,
+        showHeader: options.showColorCodes,
+        showCoordinates: options.showCoordinates,
+        showStatistics: options.showColorCodes,
+        coordinateInterval: options.gridInterval,
         cellSize: 30,
-        title: '拼豆图纸'
+        title: '拼豆图纸',
+        showGrid: options.showGrid,
+        gridLineColor: options.gridLineColor,
+        ignoreBackground: options.ignoreBackground,
       })
       downloadChart(canvas, `pixel-art-${gridSize}x${gridSize}.png`)
     } catch (error) {
@@ -289,5 +298,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
         </div>
       </div>
     </div>
+
+    {/* Export Options Dialog */}
+    <ExportOptionsDialog
+      isOpen={showExportDialog}
+      onClose={() => setShowExportDialog(false)}
+      onExport={handleExport}
+    />
+  </div>
   )
 }
