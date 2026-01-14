@@ -297,14 +297,13 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
           )}
         </div>
       </div>
-    </div>
 
-    {/* Export Options Dialog */}
-    <ExportOptionsDialog
-      isOpen={showExportDialog}
-      onClose={() => setShowExportDialog(false)}
-      onExport={handleExport}
-    />
-  </div>
+      {/* Export Options Dialog */}
+      <ExportOptionsDialog
+        isOpen={showExportDialog}
+        onClose={() => setShowExportDialog(false)}
+        onExport={handleExport}
+      />
+    </div>
   )
 }
