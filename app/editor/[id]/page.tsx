@@ -306,28 +306,29 @@ export default function EditorPage({ params }: { params: Promise<{ id: string }>
 
         {/* Canvas Area */}
         <div className="flex-1 overflow-hidden">
-        {isLoading ? (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black mb-4"></div>
-              <p className="text-muted-foreground">正在生成像素艺术...</p>
+          {isLoading ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-black mb-4"></div>
+                <p className="text-muted-foreground">正在生成像素艺术...</p>
+              </div>
             </div>
-          </div>
-        ) : error ? (
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="text-center max-w-md">
-              <div className="text-4xl mb-4">⚠️</div>
-              <p className="text-red-600 font-medium mb-2">错误</p>
-              <p className="text-muted-foreground text-sm">{error}</p>
+          ) : error ? (
+            <div className="w-full h-full flex items-center justify-center">
+              <div className="text-center max-w-md">
+                <div className="text-4xl mb-4">⚠️</div>
+                <p className="text-red-600 font-medium mb-2">错误</p>
+                <p className="text-muted-foreground text-sm">{error}</p>
+              </div>
             </div>
-          </div>
-        ) : pixelArtResult ? (
-          <EditableCanvas pixelData={pixelArtResult} showGrid={showGrid} onGridChange={handleGridChange} />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-            <p>暂无图像数据，请上传图像</p>
-          </div>
-        )}
+          ) : pixelArtResult ? (
+            <EditableCanvas pixelData={pixelArtResult} showGrid={showGrid} onGridChange={handleGridChange} />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+              <p>暂无图像数据，请上传图像</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
