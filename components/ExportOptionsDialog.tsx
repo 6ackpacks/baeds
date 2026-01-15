@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { X } from "lucide-react"
 
-export interface ExportOptions {
+export interface DialogExportOptions {
   showGrid: boolean
   gridInterval: number
   showCoordinates: boolean
@@ -15,7 +15,7 @@ export interface ExportOptions {
 interface ExportOptionsDialogProps {
   isOpen: boolean
   onClose: () => void
-  onExport: (options: ExportOptions) => void
+  onExport: (options: DialogExportOptions) => void
 }
 
 export default function ExportOptionsDialog({
@@ -23,7 +23,7 @@ export default function ExportOptionsDialog({
   onClose,
   onExport,
 }: ExportOptionsDialogProps) {
-  const [options, setOptions] = useState<ExportOptions>({
+  const [options, setOptions] = useState<DialogExportOptions>({
     showGrid: true,
     gridInterval: 10,
     showCoordinates: true,
@@ -137,13 +137,13 @@ export default function ExportOptionsDialog({
         <div className="flex gap-3 mt-6">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-200 hover:scale-105 transition-all duration-200"
           >
             取消
           </button>
           <button
             onClick={handleExport}
-            className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800"
+            className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 hover:scale-105 transition-all duration-200"
           >
             导出
           </button>

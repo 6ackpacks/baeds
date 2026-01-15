@@ -10,17 +10,27 @@ import React, { useState, useCallback, useRef, useEffect } from "react"
 import { Pencil, Eraser, Pipette, PaintBucket, FlipHorizontal, Hand, Eye, Edit3 } from "lucide-react"
 import type { PixelArtResult } from "@/lib/pixel-converter"
 import { screenToGrid, floodFill, getMirrorPoint, type ToolType } from "@/lib/canvas-tools"
+import UsedColorsPalette from "./UsedColorsPalette"
+import FullColorPaletteDialog from "./FullColorPaletteDialog"
 
 interface EditableCanvasProps {
   pixelData: PixelArtResult
   showGrid?: boolean
   onGridChange?: (newGrid: (string | null)[][]) => void
+  isEditMode?: boolean
+  onEditModeChange?: (isEditMode: boolean) => void
+  selectedColor?: string
+  onColorPick?: (color: string) => void
 }
 
 export default function EditableCanvas({
   pixelData,
   showGrid = true,
   onGridChange,
+  isEditMode: isEditModeProp,
+  onEditModeChange,
+  selectedColor: selectedColorProp,
+  onColorPick,
 }: EditableCanvasProps) {
   const { gridSize, pixels, colorPalette } = pixelData
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -29,9 +39,9 @@ export default function EditableCanvas({
   const basePixelSize = 20
 
   // Editor state
-  const [isEditMode, setIsEditMode] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(isEditModeProp ?? false)
   const [currentTool, setCurrentTool] = useState<ToolType>('pen')
-  const [selectedColorId, setSelectedColorId] = useState<string | null>(null)
+  const [selectedColorId, setSelectedColorId] = useState<string | null>(selectedColorProp ?? null)
   const [editableGrid, setEditableGrid] = useState<(string | null)[][]>(pixels)
   const [history, setHistory] = useState<(string | null)[][][]>([pixels])
   const [historyIndex, setHistoryIndex] = useState(0)
@@ -43,6 +53,8 @@ export default function EditableCanvas({
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   const [isDrawing, setIsDrawing] = useState(false)
   const [isSpacePressed, setIsSpacePressed] = useState(false)
+  const [hoveredTool, setHoveredTool] = useState<string | null>(null)
+  const [showFullPalette, setShowFullPalette] = useState(false)
 
   // Calculate initial zoom to fit canvas in viewport
   const calculateInitialZoom = useCallback(() => {
@@ -71,6 +83,20 @@ export default function EditableCanvas({
     setHistory([pixels])
     setHistoryIndex(0)
   }, [pixels])
+
+  // Sync edit mode with parent
+  useEffect(() => {
+    if (isEditModeProp !== undefined && isEditModeProp !== isEditMode) {
+      setIsEditMode(isEditModeProp)
+    }
+  }, [isEditModeProp])
+
+  // Sync selected color with parent
+  useEffect(() => {
+    if (selectedColorProp && selectedColorProp !== selectedColorId) {
+      setSelectedColorId(selectedColorProp)
+    }
+  }, [selectedColorProp])
 
   // Select first color by default
   useEffect(() => {
@@ -159,33 +185,44 @@ export default function EditableCanvas({
 
     switch (currentTool) {
       case 'pen':
-        if (selectedColorId) {
+        if (selectedColorProp) {
+          // Use custom color from color picker
+          newGrid[point.y][point.x] = selectedColorProp
+        } else if (selectedColorId) {
+          // Use color from palette
           newGrid[point.y][point.x] = selectedColorId
         }
         break
       case 'eraser':
-        newGrid[point.y][point.x] = null
+        // Set to white color
+        newGrid[point.y][point.x] = '#FFFFFF'
         break
       case 'picker':
-        const pickedColor = editableGrid[point.y][point.x]
-        if (pickedColor) setSelectedColorId(pickedColor)
-        setIsDrawing(false)
-        return
-      case 'fill':
-        const targetColor = editableGrid[point.y][point.x]
-        const filledGrid = floodFill(editableGrid, point.x, point.y, targetColor, selectedColorId)
-        setEditableGrid(filledGrid)
-        saveToHistory(filledGrid)
-        onGridChange?.(filledGrid)
-        setIsDrawing(false)
-        return
-      case 'mirror':
-        if (selectedColorId) {
-          newGrid[point.y][point.x] = selectedColorId
-          const mirrorX = getMirrorPoint(point.x, gridSize)
-          newGrid[point.y][mirrorX] = selectedColorId
+        const pickedColorValue = editableGrid[point.y][point.x]
+        if (pickedColorValue) {
+          // Check if it's a hex color or colorId
+          if (pickedColorValue.startsWith('#')) {
+            // It's a hex color, update parent color picker
+            onColorPick?.(pickedColorValue)
+          } else {
+            // It's a colorId, get hex from palette
+            const color = colorPalette.get(pickedColorValue)
+            if (color) {
+              onColorPick?.(color.hex)
+            }
+          }
+          setSelectedColorId(pickedColorValue)
         }
-        break
+        setIsDrawing(false)
+        return
+      case 'clear':
+        const targetColor = editableGrid[point.y][point.x]
+        const clearedGrid = floodFill(editableGrid, point.x, point.y, targetColor, null)
+        setEditableGrid(clearedGrid)
+        saveToHistory(clearedGrid)
+        onGridChange?.(clearedGrid)
+        setIsDrawing(false)
+        return
     }
 
     setEditableGrid(newGrid)
@@ -213,19 +250,14 @@ export default function EditableCanvas({
 
     switch (currentTool) {
       case 'pen':
-        if (selectedColorId) {
+        if (selectedColorProp) {
+          newGrid[point.y][point.x] = selectedColorProp
+        } else if (selectedColorId) {
           newGrid[point.y][point.x] = selectedColorId
         }
         break
       case 'eraser':
-        newGrid[point.y][point.x] = null
-        break
-      case 'mirror':
-        if (selectedColorId) {
-          newGrid[point.y][point.x] = selectedColorId
-          const mirrorX = getMirrorPoint(point.x, gridSize)
-          newGrid[point.y][mirrorX] = selectedColorId
-        }
+        newGrid[point.y][point.x] = '#FFFFFF'
         break
     }
 
@@ -268,13 +300,22 @@ export default function EditableCanvas({
     // Draw pixels
     for (let y = 0; y < gridSize; y++) {
       for (let x = 0; x < gridSize; x++) {
-        const colorId = editableGrid[y][x]
-        if (!colorId) continue
+        const colorValue = editableGrid[y][x]
+        if (!colorValue) continue
 
-        const color = colorPalette.get(colorId)
-        if (!color) continue
+        let hexColor: string | undefined
 
-        ctx.fillStyle = color.hex
+        // Check if it's a hex color or colorId
+        if (colorValue.startsWith('#')) {
+          hexColor = colorValue
+        } else {
+          const color = colorPalette.get(colorValue)
+          hexColor = color?.hex
+        }
+
+        if (!hexColor) continue
+
+        ctx.fillStyle = hexColor
         ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize)
 
         // Draw grid
@@ -294,82 +335,111 @@ export default function EditableCanvas({
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col md:flex-row">
       {/* Tool Toolbar */}
       {isEditMode && (
-        <div className="w-16 bg-white border-r border-border flex flex-col items-center py-4 gap-2">
-          <button
-            onClick={() => setCurrentTool('pen')}
-            className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors ${
-              currentTool === 'pen' ? 'bg-black text-white' : 'hover:bg-secondary'
-            }`}
-            title="画笔 (Pen)"
-          >
-            <Pencil className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setCurrentTool('eraser')}
-            className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors ${
-              currentTool === 'eraser' ? 'bg-black text-white' : 'hover:bg-secondary'
-            }`}
-            title="橡皮 (Eraser)"
-          >
-            <Eraser className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setCurrentTool('picker')}
-            className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors ${
-              currentTool === 'picker' ? 'bg-black text-white' : 'hover:bg-secondary'
-            }`}
-            title="吸管 (Picker)"
-          >
-            <Pipette className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setCurrentTool('fill')}
-            className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors ${
-              currentTool === 'fill' ? 'bg-black text-white' : 'hover:bg-secondary'
-            }`}
-            title="填充 (Fill)"
-          >
-            <PaintBucket className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => setCurrentTool('mirror')}
-            className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors ${
-              currentTool === 'mirror' ? 'bg-black text-white' : 'hover:bg-secondary'
-            }`}
-            title="镜像 (Mirror)"
-          >
-            <FlipHorizontal className="w-5 h-5" />
-          </button>
+        <div className="w-full md:w-16 bg-white border-b md:border-r md:border-b-0 border-border flex md:flex-col items-center py-2 md:py-4 gap-2 px-2 md:px-0 overflow-x-auto md:overflow-x-visible">
+          <div className="relative">
+            <button
+              onClick={() => setCurrentTool('pen')}
+              onMouseEnter={() => setHoveredTool('pen')}
+              onMouseLeave={() => setHoveredTool(null)}
+              className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                currentTool === 'pen' ? 'bg-black text-white' : 'hover:bg-gray-200 hover:scale-110'
+              }`}
+            >
+              <Pencil className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+            {hoveredTool === 'pen' && (
+              <div className="hidden md:block absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-black text-white px-3 py-1.5 rounded text-sm whitespace-nowrap z-50 pointer-events-none">
+                画笔
+              </div>
+            )}
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setCurrentTool('eraser')}
+              onMouseEnter={() => setHoveredTool('eraser')}
+              onMouseLeave={() => setHoveredTool(null)}
+              className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                currentTool === 'eraser' ? 'bg-black text-white' : 'hover:bg-gray-200 hover:scale-110'
+              }`}
+            >
+              <Eraser className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+            {hoveredTool === 'eraser' && (
+              <div className="hidden md:block absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-black text-white px-3 py-1.5 rounded text-sm whitespace-nowrap z-50 pointer-events-none">
+                橡皮
+              </div>
+            )}
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setCurrentTool('picker')}
+              onMouseEnter={() => setHoveredTool('picker')}
+              onMouseLeave={() => setHoveredTool(null)}
+              className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                currentTool === 'picker' ? 'bg-black text-white' : 'hover:bg-gray-200 hover:scale-110'
+              }`}
+            >
+              <Pipette className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+            {hoveredTool === 'picker' && (
+              <div className="hidden md:block absolute left-full ml-2 top-1/2 -translate-y-1/2 bg-black text-white px-3 py-1.5 rounded text-sm whitespace-nowrap z-50 pointer-events-none">
+                吸管
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* Canvas Area */}
       <div className="flex-1 flex flex-col">
         {/* Mode Toggle */}
-        <div className="h-14 bg-white border-b border-border flex items-center justify-center px-6">
-          <div className="flex items-center gap-2">
+        <div className="h-12 md:h-14 bg-white border-b border-border flex items-center justify-between px-3 md:px-6">
+          <div className="flex items-center gap-1 md:gap-2">
             <button
-              onClick={() => setIsEditMode(false)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                !isEditMode ? 'bg-black text-white' : 'bg-secondary text-foreground hover:bg-secondary/80'
+              onClick={() => {
+                setIsEditMode(false)
+                onEditModeChange?.(false)
+              }}
+              className={`px-2 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
+                !isEditMode ? 'bg-black text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-300 hover:scale-105'
               }`}
             >
-              <Eye className="w-4 h-4 inline mr-2" />
-              查看模式
+              <Eye className="w-3 h-3 md:w-4 md:h-4 inline mr-1 md:mr-2" />
+              <span className="hidden sm:inline">查看模式</span>
+              <span className="sm:hidden">查看</span>
             </button>
             <button
-              onClick={() => setIsEditMode(true)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isEditMode ? 'bg-black text-white' : 'bg-secondary text-foreground hover:bg-secondary/80'
+              onClick={() => {
+                setIsEditMode(true)
+                onEditModeChange?.(true)
+              }}
+              className={`px-2 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
+                isEditMode ? 'bg-black text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-300 hover:scale-105'
               }`}
             >
-              <Edit3 className="w-4 h-4 inline mr-2" />
-              编辑模式
+              <Edit3 className="w-3 h-3 md:w-4 md:h-4 inline mr-1 md:mr-2" />
+              <span className="hidden sm:inline">编辑模式</span>
+              <span className="sm:hidden">编辑</span>
             </button>
           </div>
+
+          {/* Compact Color Palette in Edit Mode */}
+          {isEditMode && (
+            <div className="hidden md:block flex-1 max-w-md ml-4">
+              <UsedColorsPalette
+                colorPalette={colorPalette}
+                selectedColor={selectedColorProp || selectedColorId || ''}
+                onColorSelect={(color) => {
+                  onColorPick?.(color)
+                  setCurrentTool('pen')
+                }}
+                onOpenFullPalette={() => setShowFullPalette(true)}
+              />
+            </div>
+          )}
         </div>
 
         {/* Canvas */}
@@ -383,6 +453,20 @@ export default function EditableCanvas({
           onPointerLeave={handlePointerUp}
           onWheel={handleWheel}
         >
+          {/* Clear Button - Top Left */}
+          {isEditMode && (
+            <button
+              onClick={() => setCurrentTool('clear')}
+              className={`absolute top-4 left-4 z-10 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 shadow-lg ${
+                currentTool === 'clear'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-red-50 hover:scale-105 border-2 border-gray-300'
+              }`}
+            >
+              <PaintBucket className="w-4 h-4 inline mr-2" />
+              消除
+            </button>
+          )}
           <div
             style={{
               transform: `translate(${pan.x}px, ${pan.y}px)`,
@@ -394,45 +478,45 @@ export default function EditableCanvas({
       </div>
 
       {/* Color Palette Sidebar */}
-      <div className="w-80 bg-white border-l border-border overflow-y-auto">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold mb-4">颜色统计</h2>
+      <div className="w-full md:w-80 bg-white border-t md:border-l md:border-t-0 border-border overflow-y-auto max-h-[40vh] md:max-h-none">
+        <div className="p-3 md:p-6">
+          <h2 className="text-base md:text-lg font-semibold mb-3 md:mb-4">颜色统计</h2>
 
           {/* Overall Statistics */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="mb-4 md:mb-6 p-3 md:p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="grid grid-cols-2 gap-3 md:gap-4">
               <div>
-                <p className="text-xs text-gray-500 mb-1">颜色种类</p>
-                <p className="text-2xl font-bold">{colorPalette.size}</p>
+                <p className="text-[10px] md:text-xs text-gray-500 mb-1">颜色种类</p>
+                <p className="text-xl md:text-2xl font-bold">{colorPalette.size}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 mb-1">总珠子数</p>
-                <p className="text-2xl font-bold">{pixelData.totalBeads}</p>
+                <p className="text-[10px] md:text-xs text-gray-500 mb-1">总珠子数</p>
+                <p className="text-xl md:text-2xl font-bold">{pixelData.totalBeads}</p>
               </div>
             </div>
           </div>
 
-          <h3 className="text-sm font-semibold mb-3">颜色清单</h3>
-          <div className="space-y-3">
+          <h3 className="text-xs md:text-sm font-semibold mb-2 md:mb-3">颜色清单</h3>
+          <div className="space-y-2 md:space-y-3">
             {Array.from(colorPalette.values()).map((color) => (
               <div
                 key={color.id}
-                className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-border"
+                className="flex items-center gap-2 md:gap-3 p-2 md:p-3 bg-gray-50 rounded-lg border border-border"
               >
                 <div
-                  className="w-12 h-12 rounded-lg border-2 border-border flex-shrink-0"
+                  className="w-8 h-8 md:w-12 md:h-12 rounded-lg border-2 border-border flex-shrink-0"
                   style={{ backgroundColor: color.hex }}
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-sm">{color.id}</span>
-                    <span className="text-xs bg-white px-2 py-1 rounded border border-border">
+                  <div className="flex items-center justify-between mb-0.5 md:mb-1">
+                    <span className="font-medium text-xs md:text-sm truncate">{color.id}</span>
+                    <span className="text-[10px] md:text-xs bg-white px-1.5 py-0.5 md:px-2 md:py-1 rounded border border-border">
                       {color.name}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-muted-foreground">{color.hex}</span>
-                    <span className="font-medium text-sm">
+                    <span className="text-[10px] md:text-xs text-muted-foreground">{color.hex}</span>
+                    <span className="font-medium text-xs md:text-sm">
                       {pixelData.colorUsage[color.id] || 0} 颗
                     </span>
                   </div>
@@ -442,6 +526,17 @@ export default function EditableCanvas({
           </div>
         </div>
       </div>
+
+      {/* Full Color Palette Dialog */}
+      <FullColorPaletteDialog
+        isOpen={showFullPalette}
+        onClose={() => setShowFullPalette(false)}
+        onColorSelect={(color) => {
+          onColorPick?.(color)
+          setCurrentTool('pen')
+        }}
+        selectedColor={selectedColorProp || selectedColorId || ''}
+      />
     </div>
   )
 }
