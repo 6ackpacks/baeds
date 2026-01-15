@@ -14,7 +14,7 @@ export default function HomePage() {
   const [isLoadingWorks, setIsLoadingWorks] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const router = useRouter()
-  const { uploadedImage, fileInputRef, handleFileInput, handleFile } = useImageUpload()
+  const { uploadedImage, setUploadedImage, fileInputRef, handleFileInput, handleFile } = useImageUpload()
 
   const handleUploadComplete = () => {
     if (uploadedImage) {
